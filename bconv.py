@@ -13,14 +13,13 @@ import csv
 
 class BlackConverter(PDFConverter):
 
-    def __init__(self, rsrcmgr, outfp, pageno=1):
+    def __init__(self, rsrcmgr, outfp):
         laparams = LAParams()
         laparams.char_margin=0.1
         PDFConverter.__init__(self, rsrcmgr, outfp, codec='utf-8', laparams=laparams)
         self.lines = []
         self.boxes = []
-        self.writer = csv.writer(outfp,
-                                 lineterminator='\n')
+        self.writer = csv.writer(outfp, lineterminator='\n')
         self.writer.writerow(["企業・事業場名称",
                               "所在地",
                               "公表日",
@@ -35,9 +34,6 @@ class BlackConverter(PDFConverter):
                 for child in item:
                     render(child)
             if isinstance(item, LTTextBox):
-                (x0, y0, x1, y1) = item.bbox
-                x = int(x0)
-                y = int(y0)
                 text = item.get_text()
                 self.boxes.append(item)
             elif isinstance(item, LTRect):
@@ -56,28 +52,26 @@ class BlackConverter(PDFConverter):
                     row = []
                     for b in self.boxes:
                         if y0 > b.bbox[1] > y1:
-                            row.append(b)
+                            row.append(b.get_text().rstrip())
                     l = len(row)
                     if l == 0:
                         pass
                     elif l == 6:
                         # correct
-                        text = map(lambda col: col.get_text().rstrip(), row)
-                        name = text[0].replace("\n", "")
-                        if len(name) > 30:
-                            name = name[:30] + u'…'
-                        addr = text[1].replace("\n", "")
-                        date = text[2]
-                        violation = text[3]
-                        desc = text[4].replace("\n", "")
-                        etc = text[5]
+                        name = row[0].replace("\n", "")
+                        if len(name) > 25:
+                            name = name[:25] + u'…'
+                        addr = row[1].replace("\n", "")
+                        date = row[2]
+                        violation = row[3]
+                        desc = row[4].replace("\n", "")
+                        etc = row[5]
                         self.writer.writerow(map(lambda s: s.encode('UTF-8'),
                                                  [name, addr, date, violation, desc, etc]))
                     else:
                         raise Exception("invalid len")
                 self.lines = []
                 self.boxes = []
-
         render(ltpage)
         return
 
@@ -89,8 +83,7 @@ def main(argv):
     fp = file(argv[1], 'rb')
     pagenos = set()
     interpreter = PDFPageInterpreter(rsrcmgr, device)
-    for page in PDFPage.get_pages(fp, pagenos,
-                                  caching=True,
+    for page in PDFPage.get_pages(fp, pagenos, caching=True,
                                   check_extractable=True):
         interpreter.process_page(page)
     fp.close()
