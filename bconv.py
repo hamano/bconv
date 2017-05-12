@@ -66,7 +66,7 @@ class BlackConverter(PDFConverter):
                         name = text[0].replace("\n", "")
                         if len(name) > 30:
                             name = name[:30] + u'…'
-                        addr = text[1]
+                        addr = text[1].replace("\n", "")
                         date = text[2]
                         violation = text[3]
                         desc = text[4].replace("\n", "")
@@ -89,9 +89,9 @@ def main(argv):
     fp = file(argv[1], 'rb')
     pagenos = set()
     interpreter = PDFPageInterpreter(rsrcmgr, device)
-    for i, page in enumerate(PDFPage.get_pages(fp, pagenos,
-                                               caching=True,
-                                               check_extractable=True)):
+    for page in PDFPage.get_pages(fp, pagenos,
+                                  caching=True,
+                                  check_extractable=True):
         interpreter.process_page(page)
     fp.close()
     outfp.close()
