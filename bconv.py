@@ -1,4 +1,6 @@
 #!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+
 import sys
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfparser import PDFParser
@@ -19,6 +21,12 @@ class BlackConverter(PDFConverter):
         self.boxes = []
         self.writer = csv.writer(outfp,
                                  lineterminator='\n')
+        self.writer.writerow(["企業・事業場名称",
+                              "所在地",
+                              "公表日",
+                              "違反法条",
+                              "事案概要",
+                              "その他参考事項"])
         return
 
     def receive_layout(self, ltpage):
@@ -55,13 +63,16 @@ class BlackConverter(PDFConverter):
                     elif l == 6:
                         # correct
                         text = map(lambda col: col.get_text().rstrip(), row)
-                        name = text[0].replace("\n", "").encode('UTF-8')
-                        addr = text[1].encode('UTF-8')
-                        date = text[2].encode('UTF-8')
-                        violation = text[3].encode('UTF-8')
-                        desc = text[4].replace("\n", "").encode('UTF-8')
-                        etc = text[5].encode('UTF-8')
-                        self.writer.writerow([name, addr, date, violation, desc, etc])
+                        name = text[0].replace("\n", "")
+                        if len(name) > 30:
+                            name = name[:30] + u'…'
+                        addr = text[1]
+                        date = text[2]
+                        violation = text[3]
+                        desc = text[4].replace("\n", "")
+                        etc = text[5]
+                        self.writer.writerow(map(lambda s: s.encode('UTF-8'),
+                                                 [name, addr, date, violation, desc, etc]))
                     else:
                         raise Exception("invalid len")
                 self.lines = []
